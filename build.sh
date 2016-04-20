@@ -1,1 +1,1 @@
-gcc -Wall -g -o autoBIAB autoBIAB.c `pkg-config --cflags --libs gtk+-3.0`
+gcc -Wall -g -o autoBIAB autoBIAB.c sysfs_helper.c `pkg-config --cflags --libs gtk+-3.0`
