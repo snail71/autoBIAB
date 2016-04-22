@@ -5,12 +5,15 @@
 #include <malloc.h>
 #include <sys/types.h>
 #include "sysfs_helper.h"
+#include "pid.h"
 
 #define W1_DEVICE_PATH "/sys/bus/w1/devices"
 
 GtkBuilder *gtkBuilder;
 GtkLabel *lblKettleTemp;
 float f_kettleTemp = 212;
+
+struct _pid tempPID;
 
 char * sSensor = NULL;
 
@@ -57,12 +60,15 @@ gboolean read_sensor(void)
 
 gboolean state_timer_cb(gpointer data)
 {
-	if(sSensor != NULL)
-	{
-		read_sensor();
-	    updateTempLabel();
-	    
-	}
+	//if(sSensor != NULL)
+	//{
+	//	read_sensor();
+	//    updateTempLabel();
+	//    
+	//}
+	tempPID.pv = tempPID.pv + 5;
+	float newPV = pid_calc(&tempPID);
+	printf("TEMP [%3.2f] - PID [%5.2f]\n",tempPID.pv ,newPV);
 	return TRUE; 	
 }
 
@@ -93,6 +99,9 @@ gboolean find_sensor(void)
 
 int main(int argc, char *argv[])
 {
+	
+	pid_init(&tempPID,71,212);
+	pid_tune(&tempPID,200,40,1,1);
 	
 	GtkWidget *window;
 	gtk_init(&argc,&argv);
