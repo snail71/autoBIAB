@@ -1,12 +1,12 @@
 #ifndef PID_AutoTune_v0
 #define PID_AutoTune_v0
-#define LIBRARY_VERSION	0.0.1
+//#define LIBRARY_VERSION	0.0.1
 
 
-
+#include <stdbool.h>
 
   //commonly used functions **************************************************************************
-    pidat_Init(double*, double*);                       	// * Constructor.  links the Autotune to a given PID
+    void pidat_Init(double*, double*);                       	// * Constructor.  links the Autotune to a given PID
     int pidat_Runtime();						   			   	// * Similar to the PID Compue function, returns non 0 when done
 	void pidat_Cancel();									   	// * Stops the AutoTune	
 	

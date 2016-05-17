@@ -1,1 +1,1 @@
-gcc -Wall -g -o autoBIAB autoBIAB.c sysfs_helper.c pid.c `pkg-config --cflags --libs gtk+-3.0`
+gcc -Wall -g -o autoBIAB autoBIAB.c rs232.c `pkg-config --cflags --libs gtk+-3.0`

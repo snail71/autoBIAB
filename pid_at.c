@@ -1,9 +1,10 @@
-
+#include <math.h>
+#include <stdlib.h>
 #include "pid.h"
 #include "pid_at.h"
 
 
-pidat_Init(double* Input, double* Output)
+void pidat_Init(double* Input, double* Output)
 {
 	input = Input;
 	output = Output;
@@ -11,7 +12,7 @@ pidat_Init(double* Input, double* Output)
 	noiseBand = 0.5;
 	running = false;
 	oStep = 30;
-	SetLookbackSec(10);
+	pidat_SetLookbackSec(10);
 	lastTime = millis();
 	
 }
@@ -25,11 +26,12 @@ void pidat_Cancel()
  
 int pidat_Runtime()
 {
+	int i = 0;
 	justevaled=false;
 	if(peakCount>9 && running)
 	{
 		running = false;
-		FinishUp();
+		pidat_FinishUp();
 		return 1;
 	}
 	unsigned long now = millis();
@@ -65,7 +67,7 @@ int pidat_Runtime()
   //bool isMax=true, isMin=true;
   isMax=true;isMin=true;
   //id peaks
-  for(int i=nLookBack-1;i>=0;i--)
+  for(i=nLookBack-1;i>=0;i--)
   {
     double val = lastInputs[i];
     if(isMax) isMax = refVal>val;
@@ -109,7 +111,7 @@ int pidat_Runtime()
     double avgSeparation = (abs(peaks[peakCount-1]-peaks[peakCount-2])+abs(peaks[peakCount-2]-peaks[peakCount-3]))/2;
     if( avgSeparation < 0.05*(absMax-absMin))
     {
-		FinishUp();
+		pidat_FinishUp();
       running = false;
 	  return 1;
 	 

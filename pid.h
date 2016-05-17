@@ -1,7 +1,7 @@
 #ifndef PID_v1_h
 #define PID_v1_h
 #define LIBRARY_VERSION	1.0.0
-
+#include <stdbool.h>
 
 
   //Constants used in some of the functions below
@@ -9,9 +9,9 @@
   #define MANUAL	0
   #define DIRECT  0
   #define REVERSE  1
-
+unsigned long millis(void);
   //commonly used functions **************************************************************************
-    pid_Init(double*, double*, double*,        // * constructor.  links the PID to the Input, Output, and 
+    void pid_Init(double*, double*, double*,        // * constructor.  links the PID to the Input, Output, and 
         double, double, double, int);     //   Setpoint.  Initial tuning parameters are also set here
 	
     void pid_SetMode(int Mode);               // * sets PID to either Manual (0) or Auto (non-0)

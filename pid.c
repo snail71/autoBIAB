@@ -3,9 +3,13 @@
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-unsigned long millis()
+unsigned long millis(void)
  {
 	struct timeval te;
 	gettimeofday(&te,NULL);
@@ -17,7 +21,7 @@ unsigned long millis()
  *    The parameters specified here are those for for which we can't set up 
  *    reliable defaults, so we need to have the user set them.
  ***************************************************************************/
-pid_Init(double* Input, double* Output, double* Setpoint,
+void pid_Init(double* Input, double* Output, double* Setpoint,
         double Kp, double Ki, double Kd, int ControllerDirection)
 {
 	
