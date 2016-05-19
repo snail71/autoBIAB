@@ -8,8 +8,8 @@
 #define __USE_C99_MATH
 #include <stdbool.h>
 #include "rs232.h"
-//#include "sysfs_helper.h"
-//#include "tempController.h"
+#include "utils.h"
+
 
 #define ARD_PORT 3/*ttyS3 on J12 pins 4(RXD) and 6(TXD)*/
 
@@ -23,29 +23,7 @@ float f_setpoint = 152;
 bool isRunningTempControl = false;
 bool ardPortOpen = false;
 gint tmrArdIFC = 0;
-
-
-
-//struct _pid tempPID;
-
-void log_data()
-{
-	FILE *fp;
-	//char buffer[255];
-	char dt[255];
-	time_t t = time(NULL);
-	struct tm tm = *localtime(&t);
-	sprintf(dt,"%d-%d-%d %d:%d:%d",tm.tm_year + 1900,tm.tm_mon + 1, tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
-	
-	//int bytes = sprintf(buffer,"%s,%3.2f,%3.2f,%3.2f\n",dt,f_setpoint,f_kettleTemp,f_kettleHeatLevel);
-	//printf("%s",buffer);
-	//int fd = open("session.log",O_WRONLY | O_APPEND, S_IRUSR | S_IWUSR);
-	//write(fd,buffer,bytes);
-	//close(fd);
-	fp = fopen("session.log","a");
-	fprintf(fp,"%s,%3.2f,%3.2f,%3.2f\n",dt,f_setpoint,f_kettleTemp,f_kettleHeatLevel);
-	fclose(fp);
-}
+bool polltemp = true;
 
 void updateTempLabel(void)
 {
@@ -61,69 +39,7 @@ void updateHeatLevelLabel(void)
 	char sTemp [15];
 	sprintf(sTemp,"%3.2f",f_kettleHeatLevel);
 	printf("Setting temp label: %s\n",sTemp);
-	gtk_label_set_text(lblHeatLevel,sTemp);
-    
-}
-
-
-
-//void heatControlCB(float temp, bool heating)
-//{
-//	if(!isInitialized)
-//	    return;
-//	printf("GUI Callback: %f\n",temp);
-//   f_kettleTemp = temp;
-//    //gtk_label_set_text(lblKettleTemp,"callback");
-//    updateTempLabel();	
-//    
-//}
-
-char** str_split(char* a_str, const char a_delim)
-{
-    char** result    = 0;
-    size_t count     = 0;
-    char* tmp        = a_str;
-    char* last_comma = 0;
-    char delim[2];
-    delim[0] = a_delim;
-    delim[1] = 0;
-
-    /* Count how many elements will be extracted. */
-    while (*tmp)
-    {
-        if (a_delim == *tmp)
-        {
-            count++;
-            last_comma = tmp;
-        }
-        tmp++;
-    }
-
-    /* Add space for trailing token. */
-    count += last_comma < (a_str + strlen(a_str) - 1);
-
-    /* Add space for terminating null string so caller
-       knows where the list of returned strings ends. */
-    count++;
-
-    result = malloc(sizeof(char*) * count);
-
-    if (result)
-    {
-        size_t idx  = 0;
-        char* token = strtok(a_str, delim);
-
-        while (token)
-        {
-            assert(idx < count);
-            *(result + idx++) = strdup(token);
-            token = strtok(0, delim);
-        }
-        assert(idx == count - 1);
-        *(result + idx) = 0;
-    }
-
-    return result;
+	gtk_label_set_text(lblHeatLevel,sTemp);    
 }
 
 void parse_ard_buffer(unsigned char * data)
@@ -166,8 +82,6 @@ void parse_ard_buffer(unsigned char * data)
 	}
 }
 
-bool polltemp = true;
-
 gboolean ardIFC_cb(gpointer data)
 {
 	unsigned char buf[4096];
@@ -195,7 +109,7 @@ gboolean ardIFC_cb(gpointer data)
 		polltemp = true;
 	}
 	
-	log_data();
+	log_data(f_setpoint ,f_kettleTemp,f_kettleHeatLevel);
 	
 	return TRUE;
 }
