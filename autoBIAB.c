@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include "rs232.h"
 #include "utils.h"
+#include "recipe.h"
 
 
 #define ARD_PORT 3/*ttyS3 on J12 pins 4(RXD) and 6(TXD)*/
@@ -17,6 +18,7 @@ GtkBuilder *gtkBuilder;
 GtkLabel *lblKettleTemp;
 GtkLabel *lblHeatLevel;
 GtkLabel *lblButtonStartStop;
+GtkLabel *lblRecipeName;
 float f_kettleTemp = 212;
 float f_kettleHeatLevel = 0;
 float f_setpoint = 152;
@@ -24,6 +26,15 @@ bool isRunningTempControl = false;
 bool ardPortOpen = false;
 gint tmrArdIFC = 0;
 bool polltemp = true;
+struct recipe brewRecipe;
+
+void updateRecipeLabel(bool recipeLoaded)
+{	
+	if(recipeLoaded == true)
+		gtk_label_set_text(lblRecipeName,brewRecipe.name);    
+	else
+		gtk_label_set_text(lblRecipeName,"Recipe does not exist!"); 
+}
 
 void updateTempLabel(void)
 {
@@ -176,17 +187,15 @@ void btnStartClicked(GtkWidget *widget, gpointer data)
 
 int main(int argc, char *argv[])
 {
-	
-	//pid_init(&tempPID,71,212);
-	//pid_tune(&tempPID,200,40,1,1);
+	bool recipeLoaded = false;
+		
+	recipeLoaded = load_recipe_file("recipe.xml",&brewRecipe);
 	
 	GtkWidget *window;
 	GtkWidget *button;
 	GtkWindow *mainWin;
 	
-	gtk_init(&argc,&argv);
-	
-	
+	gtk_init(&argc,&argv);	
 	
 	gtkBuilder = gtk_builder_new();
 	gtk_builder_add_from_file(gtkBuilder,"autoBIAB.glade",NULL);
@@ -198,21 +207,21 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	button = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnStart"));
+	gtk_widget_set_sensitive(button,recipeLoaded);
 	lblKettleTemp = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblKettleTemp"));
 	lblHeatLevel = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblHeatLevel"));
 	lblButtonStartStop = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblButtonStartStop"));
+	lblRecipeName = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblRecipeName"));
 	g_object_unref(G_OBJECT(gtkBuilder));
 	g_signal_connect_swapped(G_OBJECT(window),"destroy",G_CALLBACK(gtk_main_quit),NULL);
 	g_signal_connect(button,"clicked",G_CALLBACK(btnStartClicked),NULL);
 	gtk_window_move(mainWin,0,0);
 	gtk_widget_show_all(window);
 	
-	//tc_Init(212,16.16, 0.14, 480.10);
-	//tc_RegisterCB(heatControlCB);
+	updateRecipeLabel(recipeLoaded);	
 	
 	gtk_main();
-	//tc_Stop();
-	//tc_UnregisterCB();
+	
 	if(isRunningTempControl)
 		stop_temp_control();
 	return 0;
