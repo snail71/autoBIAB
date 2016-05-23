@@ -8,19 +8,6 @@
 #include "recipe.h"
 #include "utils.h"
 
-//xmlNode *find_node(xmlNode *searchNode, char * nodeName)
-//{
-//	xmlNode *first_child, *node;
-//	first_child = searchNode->children;
-//	for(node=first_child; node; node = node->next)
-//	{
-//		if(strcmp(nodeName,(char *)node->name)==0)
-//			return node;
-//	}
-//	
-//	return NULL;
-//}
-
 xmlNode *find_node(xmlNode *searchNode, char * nodeName, int count)
 {
 	int found = 0;
@@ -45,7 +32,9 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec)
 	int bumpHopCount;
 	int itemsFound = 0;
 	xmlDoc	*doc;
-	xmlNode *root,*recipeNode,*node, *hopsNode, *hopNode,*hopElementNode,*fermentablesNode, *fermentableNode, *fermentableElement, *mashStepsNode, *mashStepNode, *mashElementNode;
+	xmlNode *root,*recipeNode,*node, *hopsNode, *hopNode,*hopElementNode,
+		*fermentablesNode, *fermentableNode, *fermentableElement, 
+		*mashStepsNode, *mashStepNode, *mashElementNode,*equipmentNode, *equipmentElementNode;
 	
 	if(access(recipeFile,F_OK) == -1)
 		return false;
@@ -194,13 +183,48 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec)
 				return false;	
 			}
 				
-			rec->grainWeight += atof((char *)xmlNodeGetContent(fermentableElement));
+			rec->grainWeight += kg_to_lbs(atof((char *)xmlNodeGetContent(fermentableElement)));
 		}
 		itemsFound ++;
 	}
 	
-	printf("Grain wt: %3.2f\n",rec->grainWeight);
+	printf("Grain wt: %3.2f lbs\n",rec->grainWeight);
 	
+	// TODO: parse mash steps
+	
+	//equipmentNode = find_node(recipeNode,"EQUIPMENT",0);
+	//if(equipmentNode == NULL)
+	//{
+	//	printf("Found no EQUIPMENT node\n");
+	//	return false;
+	//}
+	
+	//equipmentElementNode = find_node(equipmentNode,"TRUB_CHILLER_LOSS",0);
+	//if(equipmentElementNode == NULL)
+	//{
+	//	printf("Found no TRUB_CHILLER_LOSS element\n");
+	//	return false;
+	//}
+	//rec->trubLoss = liters_to_gallons( atof((char *)xmlNodeGetContent(equipmentElementNode)));
+	//printf("Trub loss: %3.2f\n",rec->trubLoss );
+	
+	//equipmentElementNode = find_node(equipmentNode,"EVAP_RATE",0);
+	//if(equipmentElementNode == NULL)
+	//{
+	//	printf("Found no EVAP_RATE element\n");
+	//	return false;
+	//}
+	//rec->evaporationRate = liters_to_gallons( atof((char *)xmlNodeGetContent(equipmentElementNode)));
+	//printf("Evap rate: %3.2f\n",rec->evaporationRate);
+	
+	//equipmentElementNode = find_node(equipmentNode,"ABSORPTION",0);
+	//if(equipmentElementNode == NULL)
+	//{
+	//	printf("Found no ABSORPTION element\n");
+	//	return false;
+	//}
+	//rec->grainAbsorption = atof((char *)xmlNodeGetContent(equipmentElementNode));
+	//printf("Absorption: %3.2f\n",rec->grainAbsorption);
 	
 	return true;
 }

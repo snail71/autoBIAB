@@ -45,6 +45,8 @@ struct recipe
 	float 			batch_size;
 	float 			grainTemp;
 	float 			grainWeight;
+	
+	
 	int				stepCount;
 	int				currentStep;
 	struct brewStep steps[25];

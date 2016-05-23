@@ -8,6 +8,11 @@
 #include <stdbool.h>
 #include <time.h>
 
+float kg_to_lbs(float kg)
+{
+	return kg * 2.2046;
+}
+
 float liters_to_gallons(float liters)
 {
 	return liters * .264172;
