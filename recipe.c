@@ -7,34 +7,40 @@
 #include <unistd.h>
 #include "recipe.h"
 #include "utils.h"
+#include "equipment.h"
+#include "controller.h"
 
-xmlNode *find_node(xmlNode *searchNode, char * nodeName, int count)
+
+void create_fill_step( struct recipe *rec,struct equipment *equip)
 {
-	int found = 0;
-	xmlNode *first_child, *node;
-	first_child = searchNode->children;
-	for(node=first_child; node; node = node->next)
-	{
-		if(strcmp(nodeName,(char *)node->name)==0)
-		{
-			if(found == count)
-				return node;
-			else 
-				found ++;
-		}
-	}
+	float losses = 0;
+	float totalWater = 0;
+	losses += rec->grainWeight * equip->grainAbsorption;
 	
-	return NULL;
+	losses += equip->trubLoss;
+	
+	losses += equip->evaporationPerHour * (rec->steps[CTL_BOIL].duration / 60.0);
+	printf("Batch size: %3.2f\n",rec->batch_size);
+	printf("Brew loss: %3.2f\n",losses);
+	totalWater = losses + rec->batch_size;
+	
+	printf("Total water: %3.2f\n",totalWater);
+	
+	rec->steps[CTL_FILL].volumeTotal = totalWater;
+	rec->steps[CTL_FILL].type = FILL;
+	rec->steps[CTL_FILL].volumeCompleted = 0;
+	
 }
 
-bool load_recipe_file(char *recipeFile, struct recipe *rec)
+
+bool load_recipe_file(char *recipeFile, struct recipe *rec,struct equipment *equip)
 {
 	int bumpHopCount;
 	int itemsFound = 0;
 	xmlDoc	*doc;
 	xmlNode *root,*recipeNode,*node, *hopsNode, *hopNode,*hopElementNode,
-		*fermentablesNode, *fermentableNode, *fermentableElement, 
-		*mashStepsNode, *mashStepNode, *mashElementNode,*equipmentNode, *equipmentElementNode;
+		*fermentablesNode, *fermentableNode, *fermentableElement/*, 
+		*mashStepsNode, *mashStepNode, *mashElementNode*/;
 	
 	if(access(recipeFile,F_OK) == -1)
 		return false;
@@ -81,10 +87,10 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec)
 	
 	rec->stepCount = 1;
 	rec->currentStep = 0;
-	rec->steps[0].type = BOIL;
-	sprintf(rec->steps[0].description,"BOIL");
-	rec->steps[0].duration = atof((char *)xmlNodeGetContent(node));
-	rec->steps[0].atSetpoint = false;
+	rec->steps[CTL_BOIL].type = BOIL;
+	sprintf(rec->steps[CTL_BOIL].description,"BOIL");
+	rec->steps[CTL_BOIL].duration = atof((char *)xmlNodeGetContent(node));
+	rec->steps[CTL_BOIL].atSetpoint = false;
 	
 	hopsNode = find_node(recipeNode,"HOPS",0);
 	if(hopsNode == NULL)
@@ -108,7 +114,7 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec)
 				printf("Found no hop NAME node\n");
 				return false;
 			}		
-			sprintf(rec->steps[0].ingredients[rec->steps[0].ingredientCount].description,"%s",(char *)xmlNodeGetContent(hopElementNode));
+			sprintf(rec->steps[CTL_BOIL].ingredients[rec->steps[CTL_BOIL].ingredientCount].description,"%s",(char *)xmlNodeGetContent(hopElementNode));
 		
 			hopElementNode = find_node(hopNode,"AMOUNT",0);
 			if(hopElementNode == NULL)
@@ -116,7 +122,7 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec)
 				printf("Found no hop AMOUNT node\n");
 				return false;
 			}		
-			rec->steps[0].ingredients[rec->steps[0].ingredientCount].amount	 = atof((char *)xmlNodeGetContent(hopElementNode));
+			rec->steps[CTL_BOIL].ingredients[rec->steps[CTL_BOIL].ingredientCount].amount	 = atof((char *)xmlNodeGetContent(hopElementNode));
 		
 			hopElementNode = find_node(hopNode,"USE",0);
 			if(hopElementNode == NULL)
@@ -126,12 +132,12 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec)
 			}	
 			if(strcmp((char *)xmlNodeGetContent(hopElementNode),"Boil") == 0)
 			{
-				rec->steps[0].ingredients[rec->steps[0].ingredientCount].use = BOIL;
+				rec->steps[CTL_BOIL].ingredients[rec->steps[CTL_BOIL].ingredientCount].use = BOIL;
 				bumpHopCount = 1;
 			}
 			else if(strcmp((char *)xmlNodeGetContent(hopElementNode),"First Wort") == 0)
 			{
-				rec->steps[0].ingredients[rec->steps[0].ingredientCount].use = FIRSTWORT;
+				rec->steps[CTL_BOIL].ingredients[rec->steps[0].ingredientCount].use = FIRSTWORT;
 				bumpHopCount = 1;
 			}
 		
@@ -141,17 +147,17 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec)
 				printf("Found no hop TIME node\n");
 				return false;
 			}	
-			rec->steps[0].ingredients[rec->steps[0].ingredientCount].timeToAdd = atof((char *)xmlNodeGetContent(hopElementNode));
-			rec->steps[0].ingredients[rec->steps[0].ingredientCount].added = false;
+			rec->steps[CTL_BOIL].ingredients[rec->steps[CTL_BOIL].ingredientCount].timeToAdd = atof((char *)xmlNodeGetContent(hopElementNode));
+			rec->steps[CTL_BOIL].ingredients[rec->steps[CTL_BOIL].ingredientCount].added = false;
 		
 			if(bumpHopCount)
 			{
-				printf("Found hop: %s [%f] @ [%f]\n",rec->steps[0].ingredients[rec->steps[0].ingredientCount].description,
-					rec->steps[0].ingredients[rec->steps[0].ingredientCount].amount,
-					rec->steps[0].ingredients[rec->steps[0].ingredientCount].timeToAdd);
+				printf("Found hop: %s [%f] @ [%f]\n",rec->steps[CTL_BOIL].ingredients[rec->steps[CTL_BOIL].ingredientCount].description,
+					rec->steps[CTL_BOIL].ingredients[rec->steps[CTL_BOIL].ingredientCount].amount,
+					rec->steps[CTL_BOIL].ingredients[rec->steps[CTL_BOIL].ingredientCount].timeToAdd);
 			}
 		
-			rec->steps[0].ingredientCount += bumpHopCount;
+			rec->steps[CTL_BOIL].ingredientCount += bumpHopCount;
 			itemsFound ++;
 		}
 	}
@@ -189,6 +195,8 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec)
 	}
 	
 	printf("Grain wt: %3.2f lbs\n",rec->grainWeight);
+	
+	create_fill_step(rec,equip);
 	
 	// TODO: parse mash steps
 	

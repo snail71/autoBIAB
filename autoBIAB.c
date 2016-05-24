@@ -7,26 +7,39 @@
 #include <sys/types.h>
 #define __USE_C99_MATH
 #include <stdbool.h>
-#include "rs232.h"
+
 #include "utils.h"
+#include "equipment.h"
 #include "recipe.h"
+#include "controller.h"
 
 
-#define ARD_PORT 3/*ttyS3 on J12 pins 4(RXD) and 6(TXD)*/
+
 
 GtkBuilder *gtkBuilder;
 GtkLabel *lblKettleTemp;
 GtkLabel *lblHeatLevel;
-GtkLabel *lblButtonStartStop;
+GtkLabel *lblStatus;
+
+GtkWidget *buttonStart;
+GtkWidget *buttonStop;
+GtkWidget *buttonPause;
+
+//GtkLabel *lblButtonStartStop;
 GtkLabel *lblRecipeName;
-float f_kettleTemp = 212;
-float f_kettleHeatLevel = 0;
+//float f_kettleTemp = 212;
+//float f_kettleHeatLevel = 0;
 float f_setpoint = 152;
-bool isRunningTempControl = false;
-bool ardPortOpen = false;
-gint tmrArdIFC = 0;
-bool polltemp = true;
+bool isBrewing = false;
+
+
+
+
 struct recipe brewRecipe;
+struct equipment brewEquipment;
+struct brew_callbacks_t brewCallbacks;
+
+
 
 void updateRecipeLabel(bool recipeLoaded)
 {	
@@ -36,7 +49,7 @@ void updateRecipeLabel(bool recipeLoaded)
 		gtk_label_set_text(lblRecipeName,"Recipe does not exist!"); 
 }
 
-void updateTempLabel(void)
+void updateTempLabel(float f_kettleTemp)
 {
 	char sTemp [15];
 	sprintf(sTemp,"%3.2f",f_kettleTemp);
@@ -45,7 +58,7 @@ void updateTempLabel(void)
     
 }
 
-void updateHeatLevelLabel(void)
+void updateHeatLevelLabel(float f_kettleHeatLevel)
 {
 	char sTemp [15];
 	sprintf(sTemp,"%3.2f",f_kettleHeatLevel);
@@ -53,146 +66,93 @@ void updateHeatLevelLabel(void)
 	gtk_label_set_text(lblHeatLevel,sTemp);    
 }
 
-void parse_ard_buffer(unsigned char * data)
-{
-	char ** lines;
-	char ** args;
-	lines = str_split((char*)data,'\n');
-	
-	if(lines)
-	{
-		int i;
-		for(i=0; *(lines+i);i++)
-		{
-			printf("%s\n",*(lines + i));
-			args = str_split(*(lines+i),':');
-			if(args)
-			{
-				if(strcmp(*(args + 0),"TEMP") == 0)
-				{
-					f_kettleTemp = atof(*(args + 1));
-					updateTempLabel();
-				}
-				else if(strcmp(*(args + 0),"SP") == 0)
-				{
-				
-				}
-				else if(strcmp(*(args + 0),"HL") == 0)
-				{
-					f_kettleHeatLevel = atof(*(args + 1));
-					updateHeatLevelLabel();
-				}
-			
-				free(*(args + 1));
-				free(args);
-			}
-			free(*(lines + i));
-		}
-		
-		free(lines);
-	}
-}
 
-gboolean ardIFC_cb(gpointer data)
-{
-	unsigned char buf[4096];
-	
-	int inbytes = RS232_PollComport(ARD_PORT,buf,4095);
-	if(inbytes > 0)
-	{
-		printf("Data rec\n");
-		buf[inbytes] = 0; // null terminate string
-		parse_ard_buffer(buf);
-	}
-	
-	if(polltemp == true)
-	{
-		// Poll temperature
-		printf("Polling temp\n");
-		RS232_SendBuf(ARD_PORT,(unsigned char *)"READTEMP:1\n",11);
-		polltemp = false;
-	}
-	else
-	{	
-		// Poll heat level
-		printf("Polling hl\n");
-		RS232_SendBuf(ARD_PORT,(unsigned char *)"READHL:1\n",9);
-		polltemp = true;
-	}
-	
-	log_data(f_setpoint ,f_kettleTemp,f_kettleHeatLevel);
-	
-	return TRUE;
-}
+//void start_temp_control()
+//{
+//	isRunningTempControl = true;
+//	gtk_label_set_text(lblButtonStartStop,"Stop");
+//	ardIFC_open();
+//}
 
-void ardIFC_open()
+//void stop_temp_control()
+//{
+//	isRunningTempControl = false;
+//	gtk_label_set_text(lblButtonStartStop,"Start");
+//	gtk_label_set_text(lblKettleTemp,"---");
+//	gtk_label_set_text(lblHeatLevel,"---");
+//	ardIFC_close();
+//}
+
+void update_brew_state_cb(enum brew_state_t state)
 {
-	if(ardPortOpen)
-		return;
-	char mode[] = {'8','N','1',0};
-	if(RS232_OpenComport(ARD_PORT,9600,mode))
+	switch(state)
 	{
-		printf("Failed to open ard port\n");
-		ardPortOpen = false;
-		return ;
+		case BREW_PAUSED:
+			gtk_widget_set_sensitive(buttonStart,true);
+			gtk_widget_set_sensitive(buttonStop,true);
+			gtk_widget_set_sensitive(buttonPause,false);
+			gtk_label_set_text(lblStatus,"Paused");
+			break;
+		case BREW_RUNNING:
+			gtk_widget_set_sensitive(buttonStart,false);
+			gtk_widget_set_sensitive(buttonStop,true);
+			gtk_widget_set_sensitive(buttonPause,true);
+			gtk_label_set_text(lblStatus,"Running");
+			break;
+		case BREW_STOPPED:
+			gtk_label_set_text(lblKettleTemp,"---");	
+			gtk_label_set_text(lblHeatLevel,"---");
+			gtk_widget_set_sensitive(buttonStart,true);
+			gtk_widget_set_sensitive(buttonStop,false);
+			gtk_widget_set_sensitive(buttonPause,false);
+			gtk_label_set_text(lblStatus,"Stopped");
+			break;
 	}
-	ardPortOpen = true;
-	tmrArdIFC = g_timeout_add(500,ardIFC_cb,NULL);
-	RS232_SendBuf(ARD_PORT,(unsigned char *)"HEATENABLE:1\n",13);
-	return ;
-}
-
-void ardIFC_close()
-{
-	if(ardPortOpen)
-	{
-		RS232_SendBuf(ARD_PORT,(unsigned char *)"HEATENABLE:0\n",13);
-		RS232_CloseComport(ARD_PORT);
-		ardPortOpen = false;
-		g_source_remove(tmrArdIFC);
-	}
-}
-
-void start_temp_control()
-{
-	isRunningTempControl = true;
-	gtk_label_set_text(lblButtonStartStop,"Stop");
-	ardIFC_open();
-}
-
-void stop_temp_control()
-{
-	isRunningTempControl = false;
-	gtk_label_set_text(lblButtonStartStop,"Start");
-	gtk_label_set_text(lblKettleTemp,"---");
-	gtk_label_set_text(lblHeatLevel,"---");
-	ardIFC_close();
 }
 
 void btnStartClicked(GtkWidget *widget, gpointer data)
 {
+	start_brew(&brewCallbacks,&brewRecipe,&brewEquipment);		    
+}
+
+void btnStopClicked(GtkWidget *widget, gpointer data)
+{
+	stop_brew();
+}
+
+void btnPauseClicked(GtkWidget *widget, gpointer data)
+{
+	pause_brew();
 	
-	if(isRunningTempControl)
-	{
-		stop_temp_control();
-		
-	}
-	else
-	{
-		start_temp_control();
-		
-	}
-    
+}
+void idle_cb()
+{
+	
+}
+
+void update_temp_cb(float temp)
+{
+	updateTempLabel(temp);
+}
+
+void fill_kettle_cb(float fillTo, float current)
+{
 }
 
 int main(int argc, char *argv[])
 {
+	GtkSettings *settings = gtk_settings_get_default();
+	g_object_set(settings,"gtk-button-images",true,NULL);
 	bool recipeLoaded = false;
-		
-	recipeLoaded = load_recipe_file("recipe.xml",&brewRecipe);
+	load_equipment_file("equipment.xml",&brewEquipment);	
+	recipeLoaded = load_recipe_file("recipe.xml",&brewRecipe,&brewEquipment);
 	
+	brewCallbacks.fillcb = fill_kettle_cb;
+	brewCallbacks.idlecb = idle_cb;
+	brewCallbacks.tempcb = update_temp_cb;
+	brewCallbacks.statecb = update_brew_state_cb;
 	GtkWidget *window;
-	GtkWidget *button;
+	
 	GtkWindow *mainWin;
 	
 	gtk_init(&argc,&argv);	
@@ -206,15 +166,20 @@ int main(int argc, char *argv[])
 		printf("Error creating window from GLADE\n");
 		return -1;
 	}
-	button = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnStart"));
-	gtk_widget_set_sensitive(button,recipeLoaded);
+	buttonStart = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnStart"));
+	buttonStop = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnStop"));
+	buttonPause = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnPause"));
+	gtk_widget_set_sensitive(buttonStart,recipeLoaded);
 	lblKettleTemp = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblKettleTemp"));
 	lblHeatLevel = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblHeatLevel"));
-	lblButtonStartStop = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblButtonStartStop"));
+	lblStatus = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblStatus"));
+	//lblButtonStartStop = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblButtonStartStop"));
 	lblRecipeName = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblRecipeName"));
 	g_object_unref(G_OBJECT(gtkBuilder));
 	g_signal_connect_swapped(G_OBJECT(window),"destroy",G_CALLBACK(gtk_main_quit),NULL);
-	g_signal_connect(button,"clicked",G_CALLBACK(btnStartClicked),NULL);
+	g_signal_connect(buttonStart,"clicked",G_CALLBACK(btnStartClicked),NULL);
+	g_signal_connect(buttonStop,"clicked",G_CALLBACK(btnStopClicked),NULL);
+	g_signal_connect(buttonPause,"clicked",G_CALLBACK(btnPauseClicked),NULL);
 	gtk_window_move(mainWin,0,0);
 	gtk_widget_show_all(window);
 	
@@ -222,8 +187,8 @@ int main(int argc, char *argv[])
 	
 	gtk_main();
 	
-	if(isRunningTempControl)
-		stop_temp_control();
+//	if(isRunningTempControl)
+//		stop_temp_control();
 	return 0;
     
 }

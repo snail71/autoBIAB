@@ -1,13 +1,18 @@
 #ifndef recipe_h
 #define recipe_h
 #include <time.h>
+#include "equipment.h"
 
 
 enum stepType
-{
-	BOIL,
-	MASH,
+{	
 	FILL,
+	STRIKE,
+	GRAININ,
+	MASH,
+	GRAINOUT,
+	DRAIN,
+	BOIL,
 	FIRSTWORT,	
 };
 
@@ -46,12 +51,11 @@ struct recipe
 	float 			grainTemp;
 	float 			grainWeight;
 	
-	
 	int				stepCount;
 	int				currentStep;
 	struct brewStep steps[25];
 };
 
-bool load_recipe_file(char *recipeFile, struct recipe *rec);
+bool load_recipe_file(char *recipeFile, struct recipe *rec, struct equipment *equip);
 
 #endif

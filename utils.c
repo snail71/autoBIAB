@@ -7,6 +7,26 @@
 #define __USE_C99_MATH
 #include <stdbool.h>
 #include <time.h>
+#include <libxml/parser.h>
+
+xmlNode *find_node(xmlNode *searchNode, char * nodeName, int count)
+{
+	int found = 0;
+	xmlNode *first_child, *node;
+	first_child = searchNode->children;
+	for(node=first_child; node; node = node->next)
+	{
+		if(strcmp(nodeName,(char *)node->name)==0)
+		{
+			if(found == count)
+				return node;
+			else 
+				found ++;
+		}
+	}
+	
+	return NULL;
+}
 
 float kg_to_lbs(float kg)
 {
@@ -17,6 +37,8 @@ float liters_to_gallons(float liters)
 {
 	return liters * .264172;
 }
+
+
 
 void log_data(float sp, float temp, float heatlvl)
 {

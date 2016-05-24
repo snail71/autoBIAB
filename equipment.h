@@ -5,8 +5,12 @@ struct equipment
 {
 	float 			kettleSizeGallons;
 	float 			grainAbsorption;
-	float			evaporationPerGallon;
+	float			evaporationPerHour;
 	float 			trubLoss;	
+	int				flowTicksPerGallon;
+	int				serialPort;
 };
+
+bool load_equipment_file(char *equipFile, struct equipment *equip);
 
 #endif
