@@ -35,6 +35,8 @@ struct brewStep
 	float 				time;
 	float 				duration;
 	bool				atSetpoint;
+	int 				countsNeeded;
+	int 				countsCompleted;
 	float 				volumeTotal;
 	float 				volumeCompleted;
 	int					ingredientCount;
@@ -51,8 +53,10 @@ struct recipe
 	float 			grainTemp;
 	float 			grainWeight;
 	
-	int				stepCount;
-	int				currentStep;
+	//int				stepCount;
+	//int				currentStep;
+	int				mashStepCount;
+	int				mashCurrentStep;
 	struct brewStep steps[25];
 };
 

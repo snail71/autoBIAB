@@ -12,25 +12,37 @@
 #include "equipment.h"
 #include "recipe.h"
 #include "controller.h"
+#include "stepconfirm.h"
 
 
 
 
 GtkBuilder *gtkBuilder;
+GtkWindow *mainWin;
+GtkLabel *lblRecipeName;
 GtkLabel *lblKettleTemp;
 GtkLabel *lblHeatLevel;
 GtkLabel *lblStatus;
+GtkLabel *lblStepName;
+GtkLabel *lblVolDurFrame;
+GtkLabel *lblRemainingFrame;
+GtkLabel *lblStepDuration;
+GtkLabel *lblStepRemaining;
+GtkLabel *lblStepSetpoint;
 
 GtkWidget *buttonStart;
 GtkWidget *buttonStop;
 GtkWidget *buttonPause;
+GtkWidget *btnConfig;
+
+
 
 //GtkLabel *lblButtonStartStop;
-GtkLabel *lblRecipeName;
+
 //float f_kettleTemp = 212;
 //float f_kettleHeatLevel = 0;
-float f_setpoint = 152;
-bool isBrewing = false;
+//float f_setpoint = 152;
+//bool isBrewing = false;
 
 
 
@@ -61,27 +73,10 @@ void updateTempLabel(float f_kettleTemp)
 void updateHeatLevelLabel(float f_kettleHeatLevel)
 {
 	char sTemp [15];
-	sprintf(sTemp,"%3.2f",f_kettleHeatLevel);
+	sprintf(sTemp,"%3f",f_kettleHeatLevel);
 	printf("Setting temp label: %s\n",sTemp);
 	gtk_label_set_text(lblHeatLevel,sTemp);    
 }
-
-
-//void start_temp_control()
-//{
-//	isRunningTempControl = true;
-//	gtk_label_set_text(lblButtonStartStop,"Stop");
-//	ardIFC_open();
-//}
-
-//void stop_temp_control()
-//{
-//	isRunningTempControl = false;
-//	gtk_label_set_text(lblButtonStartStop,"Start");
-//	gtk_label_set_text(lblKettleTemp,"---");
-//	gtk_label_set_text(lblHeatLevel,"---");
-//	ardIFC_close();
-//}
 
 void update_brew_state_cb(enum brew_state_t state)
 {
@@ -91,12 +86,14 @@ void update_brew_state_cb(enum brew_state_t state)
 			gtk_widget_set_sensitive(buttonStart,true);
 			gtk_widget_set_sensitive(buttonStop,true);
 			gtk_widget_set_sensitive(buttonPause,false);
+			gtk_widget_set_sensitive(btnConfig,false);
 			gtk_label_set_text(lblStatus,"Paused");
 			break;
 		case BREW_RUNNING:
 			gtk_widget_set_sensitive(buttonStart,false);
 			gtk_widget_set_sensitive(buttonStop,true);
 			gtk_widget_set_sensitive(buttonPause,true);
+			gtk_widget_set_sensitive(btnConfig,false);
 			gtk_label_set_text(lblStatus,"Running");
 			break;
 		case BREW_STOPPED:
@@ -105,14 +102,33 @@ void update_brew_state_cb(enum brew_state_t state)
 			gtk_widget_set_sensitive(buttonStart,true);
 			gtk_widget_set_sensitive(buttonStop,false);
 			gtk_widget_set_sensitive(buttonPause,false);
+			gtk_widget_set_sensitive(btnConfig,true);
 			gtk_label_set_text(lblStatus,"Stopped");
 			break;
 	}
 }
 
+void update_heat_step_cb(char * description, float duration, float remaining, float setpoint)
+{
+	char buf[255];
+	
+	
+	gtk_label_set_text(lblVolDurFrame,"DURATION");	
+	gtk_label_set_text(lblRemainingFrame,"REMAINING");
+	gtk_label_set_text(lblStepName,description);
+	sprintf(buf,"%3.2f",setpoint);
+	gtk_label_set_text(lblStepSetpoint,buf);
+	sprintf(buf,"%3.2f",duration);
+	gtk_label_set_text(lblStepDuration,buf);
+	sprintf(buf,"%3.2f",remaining);
+	gtk_label_set_text(lblStepRemaining,buf);
+}
+
+
+
 void btnStartClicked(GtkWidget *widget, gpointer data)
 {
-	start_brew(&brewCallbacks,&brewRecipe,&brewEquipment);		    
+	start_brew(&brewCallbacks,&brewRecipe,&brewEquipment);	
 }
 
 void btnStopClicked(GtkWidget *widget, gpointer data)
@@ -130,19 +146,37 @@ void idle_cb()
 	
 }
 
+void prompt_step_msg(char * title, char * msg)
+{
+	step_confirm_show(mainWin,title,msg);  
+}
+
 void update_temp_cb(float temp)
 {
 	updateTempLabel(temp);
 }
 
+void update_hl_cb(float temp)
+{
+	updateHeatLevelLabel(temp);
+	
+}
+
 void fill_kettle_cb(float fillTo, float current)
 {
+	char buf[255];
+	gtk_label_set_text(lblStepName,"FILL");
+	gtk_label_set_text(lblVolDurFrame,"VOLUME");	
+	gtk_label_set_text(lblRemainingFrame,"CURRENT");
+	sprintf(buf,"%1.2f",fillTo);
+	gtk_label_set_text(lblStepDuration,buf);
+	sprintf(buf,"%1.2f",current);
+	gtk_label_set_text(lblStepRemaining,buf);
 }
 
 int main(int argc, char *argv[])
 {
-	GtkSettings *settings = gtk_settings_get_default();
-	g_object_set(settings,"gtk-button-images",true,NULL);
+	
 	bool recipeLoaded = false;
 	load_equipment_file("equipment.xml",&brewEquipment);	
 	recipeLoaded = load_recipe_file("recipe.xml",&brewRecipe,&brewEquipment);
@@ -151,9 +185,12 @@ int main(int argc, char *argv[])
 	brewCallbacks.idlecb = idle_cb;
 	brewCallbacks.tempcb = update_temp_cb;
 	brewCallbacks.statecb = update_brew_state_cb;
+	brewCallbacks.heatcb = update_heat_step_cb;
+	brewCallbacks.heatlvlcb = update_hl_cb;
+	brewCallbacks.stepmsgcb = prompt_step_msg;
 	GtkWidget *window;
 	
-	GtkWindow *mainWin;
+	
 	
 	gtk_init(&argc,&argv);	
 	
@@ -166,13 +203,21 @@ int main(int argc, char *argv[])
 		printf("Error creating window from GLADE\n");
 		return -1;
 	}
+	
 	buttonStart = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnStart"));
 	buttonStop = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnStop"));
 	buttonPause = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnPause"));
+	btnConfig = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnConfig"));
 	gtk_widget_set_sensitive(buttonStart,recipeLoaded);
 	lblKettleTemp = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblKettleTemp"));
 	lblHeatLevel = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblHeatLevel"));
 	lblStatus = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblStatus"));
+	lblStepName = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblStepName"));
+	lblVolDurFrame = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblVolDurFrame"));
+	lblRemainingFrame = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblRemainingFrame"));
+	lblStepDuration = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblStepDuration"));
+	lblStepRemaining = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblStepRemaining"));
+	lblStepSetpoint = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblStepSetpoint"));
 	//lblButtonStartStop = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblButtonStartStop"));
 	lblRecipeName = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblRecipeName"));
 	g_object_unref(G_OBJECT(gtkBuilder));

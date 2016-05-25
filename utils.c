@@ -28,6 +28,11 @@ xmlNode *find_node(xmlNode *searchNode, char * nodeName, int count)
 	return NULL;
 }
 
+float celc_to_fahr(float celc)
+{
+	return (celc * 1.8000) + 32.00;
+}
+
 float kg_to_lbs(float kg)
 {
 	return kg * 2.2046;

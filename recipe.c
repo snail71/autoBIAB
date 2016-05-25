@@ -29,7 +29,8 @@ void create_fill_step( struct recipe *rec,struct equipment *equip)
 	rec->steps[CTL_FILL].volumeTotal = totalWater;
 	rec->steps[CTL_FILL].type = FILL;
 	rec->steps[CTL_FILL].volumeCompleted = 0;
-	
+	rec->steps[CTL_FILL].countsNeeded = (int)(totalWater * (float)equip->flowTicksPerGallon);
+	rec->steps[CTL_FILL].countsCompleted = 0;
 }
 
 
@@ -39,8 +40,8 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec,struct equipment *equ
 	int itemsFound = 0;
 	xmlDoc	*doc;
 	xmlNode *root,*recipeNode,*node, *hopsNode, *hopNode,*hopElementNode,
-		*fermentablesNode, *fermentableNode, *fermentableElement/*, 
-		*mashStepsNode, *mashStepNode, *mashElementNode*/;
+		*fermentablesNode, *fermentableNode, *fermentableElement, *mashNode,
+		*mashStepsNode, *mashStepNode, *mashElementNode;
 	
 	if(access(recipeFile,F_OK) == -1)
 		return false;
@@ -85,8 +86,7 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec,struct equipment *equ
 		return false;
 	}
 	
-	rec->stepCount = 1;
-	rec->currentStep = 0;
+	
 	rec->steps[CTL_BOIL].type = BOIL;
 	sprintf(rec->steps[CTL_BOIL].description,"BOIL");
 	rec->steps[CTL_BOIL].duration = atof((char *)xmlNodeGetContent(node));
@@ -197,6 +197,75 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec,struct equipment *equ
 	printf("Grain wt: %3.2f lbs\n",rec->grainWeight);
 	
 	create_fill_step(rec,equip);
+	
+	
+	
+	mashNode = find_node(recipeNode,"MASH",0);
+	if(mashNode == NULL)
+	{
+		printf("Found no MASH node\n");
+		return false;
+	}
+	
+	mashElementNode = find_node(mashNode,"GRAIN_TEMP",0);
+	if(mashElementNode == NULL)
+	{
+		printf("Found no GRAIN_TEMP node\n");
+		return false;	
+	}
+	rec->grainTemp = celc_to_fahr(atof((char *)xmlNodeGetContent(mashElementNode)));
+	printf("Grain temp: %3.2f\n",rec->grainTemp);
+	
+	mashStepsNode = find_node(mashNode,"MASH_STEPS",0);
+	if(mashStepsNode == NULL)
+	{
+		printf("Found no MASH_STEPS node\n");
+		return false;
+	}
+	
+	mashStepNode = mashStepsNode; //force not null for first loop
+	itemsFound = 0;
+	while(mashStepNode != NULL)
+	{		
+		mashStepNode = find_node(mashStepsNode,"MASH_STEP",itemsFound);
+		if(mashStepNode != NULL)
+		{
+			rec->steps[CTL_MASH + itemsFound].type = MASH;
+			mashElementNode = find_node(mashStepNode,"NAME",0);
+			if(mashElementNode != NULL)
+			{
+				
+				sprintf(rec->steps[CTL_MASH + itemsFound].description,"%s",(char *)xmlNodeGetContent(mashElementNode));
+			}
+			
+			mashElementNode = find_node(mashStepNode,"STEP_TEMP",0);
+			if(mashElementNode != NULL)
+			{
+				
+				rec->steps[CTL_MASH + itemsFound].setpoint = celc_to_fahr( atof( (char *)xmlNodeGetContent(mashElementNode)));
+			}
+			
+			mashElementNode = find_node(mashStepNode,"STEP_TIME",0);
+			if(mashElementNode != NULL)
+			{
+				
+				rec->steps[CTL_MASH + itemsFound].time = atof( (char *)xmlNodeGetContent(mashElementNode));
+			}
+			rec->mashCurrentStep = 0;
+			rec->mashStepCount ++;
+			
+			if(itemsFound == 0)
+			{
+				rec->steps[CTL_STRIKE].type = STRIKE;
+				rec->steps[CTL_STRIKE].setpoint = rec->steps[CTL_MASH + itemsFound].setpoint;
+				sprintf(rec->steps[CTL_STRIKE].description,"%s","Strike");
+				rec->steps[CTL_GRAININ].type = GRAININ;
+				rec->steps[CTL_GRAININ].setpoint = rec->steps[CTL_MASH + itemsFound].setpoint;
+				sprintf(rec->steps[CTL_GRAININ].description,"%s","Grain in");
+			}
+		}
+		itemsFound ++;
+	}
 	
 	// TODO: parse mash steps
 	

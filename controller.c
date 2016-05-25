@@ -20,6 +20,7 @@ struct equipment *equipSettings;
 struct recipe 	*recipeSettings;
 struct brew_callbacks_t *callbacks;
 bool pollTemp = true;
+float f_kettle_temp = 0;
 
 void parse_ard_buffer(unsigned char * data)
 {
@@ -39,24 +40,23 @@ void parse_ard_buffer(unsigned char * data)
 			if(args)
 			{
 				if(strcmp(*(args + 0),"TEMP") == 0)
-				{
-					callbacks->tempcb(atof(*(args + 1)));
-					//f_kettleTemp = atof(*(args + 1));
-					
+				{					
+					f_kettle_temp = atof(*(args + 1));
+					callbacks->tempcb(f_kettle_temp);
 				}
 				else if(strcmp(*(args + 0),"SP") == 0)
 				{
 				
 				}
 				else if(strcmp(*(args + 0),"HL") == 0)
-				{
-					//f_kettleHeatLevel = atof(*(args + 1));
-					//updateHeatLevelLabel();
+				{					
+					callbacks->heatlvlcb(atof(*(args + 1)));					
 				}
 				else if(strcmp(*(args + 0),"PC") == 0)
 				{
 					pulseCount = atoi(*(args +1));
 					recipeSettings->steps[CTL_FILL].volumeCompleted = pulseCount > 0 ? (float)pulseCount / (float)equipSettings->flowTicksPerGallon : 0;
+					recipeSettings->steps[CTL_FILL].countsCompleted = pulseCount;
 					callbacks->fillcb(recipeSettings->steps[CTL_FILL].volumeTotal,recipeSettings->steps[CTL_FILL].volumeCompleted );
 				}
 				free(*(args + 1));
@@ -72,6 +72,18 @@ void parse_ard_buffer(unsigned char * data)
 unsigned char buf[4096];
 int inbuffercount = 0;
 bool awaitingResponse = false;
+
+void delayMS(int ms)
+{
+	struct timespec tv = {0,ms * 1000};
+	nanosleep(&tv,NULL);
+}
+
+void step_message(char * title, char * msg)
+{
+	callbacks->stepmsgcb(title,msg);
+}
+
 gboolean ardIFC_cb(gpointer data)
 {
 	char outbuf[255];
@@ -108,18 +120,50 @@ gboolean ardIFC_cb(gpointer data)
 			switch(g_MachineState)
 			{
 				case CTL_IDLE :					
-					len = sprintf(outbuf,"FILL:%d\n",(int)(recipeSettings->steps[CTL_FILL].volumeTotal * (float)equipSettings->flowTicksPerGallon));
+					step_message("Ready to fill?","Press OK");
+					len = sprintf(outbuf,"FILL:%d\n",(int)(recipeSettings->steps[CTL_FILL].countsNeeded));
 					RS232_SendBuf(equipSettings->serialPort,(unsigned char *)outbuf,len);
 					recipeSettings->steps[CTL_FILL].startTime	= time(NULL);
+					
 					g_MachineState ++;
 					break;
 				case CTL_FILL:
-					RS232_SendBuf(equipSettings->serialPort,(unsigned char *)"READFILL:1\n",11);
-					if(recipeSettings->steps[CTL_FILL].volumeCompleted >= recipeSettings->steps[CTL_FILL].volumeTotal)
-					{
+					
+					if(recipeSettings->steps[CTL_FILL].countsCompleted >= recipeSettings->steps[CTL_FILL].countsNeeded)
+					{						
 						recipeSettings->steps[CTL_FILL].atSetpoint = true;
 						recipeSettings->steps[CTL_FILL].endTime	= time(NULL);
+						
+						len = sprintf(outbuf,"SETTEMP:%3.2f\n",recipeSettings->steps[CTL_STRIKE].setpoint);
+						RS232_SendBuf(equipSettings->serialPort,(unsigned char *)outbuf,len);
+						delayMS(25);
+						len = sprintf(outbuf,"HEATENABLE:%d\n",1);
+						RS232_SendBuf(equipSettings->serialPort,(unsigned char *)outbuf,len);
+						delayMS(25);
+						recipeSettings->steps[CTL_STRIKE].startTime	= time(NULL);
+						callbacks->heatcb(recipeSettings->steps[CTL_STRIKE].description,0,0,recipeSettings->steps[CTL_STRIKE].setpoint);
 						g_MachineState ++;
+						
+					}
+					else
+					{
+						printf("Polling fill\n");
+						RS232_SendBuf(equipSettings->serialPort,(unsigned char *)"READFILL:1\n",11);
+						awaitingResponse = true;
+					}
+					break;
+				case CTL_STRIKE:
+					
+					if(f_kettle_temp >= recipeSettings->steps[CTL_STRIKE].setpoint)
+					{
+						step_message("Drop in brain bucket","Press OK");
+						g_MachineState ++;
+					}
+					else
+					{
+						printf("Polling hl\n");
+						RS232_SendBuf(equipSettings->serialPort,(unsigned char *)"READHL:1\n",9);
+						awaitingResponse = true;
 					}
 					break;
 			}
@@ -148,7 +192,7 @@ void ardIFC_open()
 	ardPortOpen = true;
 	awaitingResponse = false;
 	pollTemp = true;
-	tmrArdIFC = g_timeout_add(50,ardIFC_cb,NULL);
+	tmrArdIFC = g_timeout_add(150,ardIFC_cb,NULL);
 	//RS232_SendBuf(ARD_PORT,(unsigned char *)"HEATENABLE:1\n",13);
 	return ;
 }
