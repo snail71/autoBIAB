@@ -88,6 +88,7 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec,struct equipment *equ
 	
 	
 	rec->steps[CTL_BOIL].type = BOIL;
+	rec->steps[CTL_BOIL].setpoint = 212; // TODO: fix this by adding equipment setting for altitude changes
 	sprintf(rec->steps[CTL_BOIL].description,"BOIL");
 	rec->steps[CTL_BOIL].duration = atof((char *)xmlNodeGetContent(node));
 	rec->steps[CTL_BOIL].atSetpoint = false;
@@ -249,7 +250,7 @@ bool load_recipe_file(char *recipeFile, struct recipe *rec,struct equipment *equ
 			if(mashElementNode != NULL)
 			{
 				
-				rec->steps[CTL_MASH + itemsFound].time = atof( (char *)xmlNodeGetContent(mashElementNode));
+				rec->steps[CTL_MASH + itemsFound].duration = atof( (char *)xmlNodeGetContent(mashElementNode));
 			}
 			rec->mashCurrentStep = 0;
 			rec->mashStepCount ++;

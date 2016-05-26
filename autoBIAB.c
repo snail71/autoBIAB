@@ -73,7 +73,7 @@ void updateTempLabel(float f_kettleTemp)
 void updateHeatLevelLabel(float f_kettleHeatLevel)
 {
 	char sTemp [15];
-	sprintf(sTemp,"%3f",f_kettleHeatLevel);
+	sprintf(sTemp,"%3.0f",f_kettleHeatLevel);
 	printf("Setting temp label: %s\n",sTemp);
 	gtk_label_set_text(lblHeatLevel,sTemp);    
 }
@@ -108,19 +108,25 @@ void update_brew_state_cb(enum brew_state_t state)
 	}
 }
 
-void update_heat_step_cb(char * description, float duration, float remaining, float setpoint)
+void update_heat_step_cb(char * description, int duration, int remaining, float setpoint)
 {
 	char buf[255];
+	int secs = 0;
+	int mins = 0;
 	
-	
+	if(remaining > 0)
+	{
+		mins = (int)remaining / 60;
+		secs = (int)remaining % 60;
+	}
 	gtk_label_set_text(lblVolDurFrame,"DURATION");	
 	gtk_label_set_text(lblRemainingFrame,"REMAINING");
 	gtk_label_set_text(lblStepName,description);
 	sprintf(buf,"%3.2f",setpoint);
 	gtk_label_set_text(lblStepSetpoint,buf);
-	sprintf(buf,"%3.2f",duration);
+	sprintf(buf,"%3d",duration);
 	gtk_label_set_text(lblStepDuration,buf);
-	sprintf(buf,"%3.2f",remaining);
+	sprintf(buf,"%3d:%02d",mins,secs);
 	gtk_label_set_text(lblStepRemaining,buf);
 }
 

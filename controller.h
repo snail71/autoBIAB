@@ -17,7 +17,7 @@ typedef void (*fillcb_t) (float, float);
 typedef void (*tempcb_t) (float);
 
 typedef void (*idlecb_t)();
-typedef void (*heatcb_t)(char */*description*/,float/*duration*/, float /*remaining*/,float/*setpoint*/);
+typedef void (*heatcb_t)(char */*description*/,int/*duration*/, int /*remaining*/,float/*setpoint*/);
 typedef void (*stepmsg_t)(char */*title*/,char */*msg*/);
 
 struct brew_callbacks_t
@@ -40,8 +40,8 @@ enum control_state
 	CTL_MASH,
 	
 	CTL_GRAINOUT=22,
-	CTL_DRAIN=23,
-	CTL_BOIL=24,	
+	CTL_BOIL,
+	CTL_END,	
 	
 }g_MachineState;
 

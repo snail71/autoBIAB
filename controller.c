@@ -22,6 +22,8 @@ struct brew_callbacks_t *callbacks;
 bool pollTemp = true;
 float f_kettle_temp = 0;
 
+gboolean ardIFC_cb(gpointer data);
+
 void parse_ard_buffer(unsigned char * data)
 {
 	char ** lines;
@@ -41,12 +43,13 @@ void parse_ard_buffer(unsigned char * data)
 			{
 				if(strcmp(*(args + 0),"TEMP") == 0)
 				{					
-					f_kettle_temp = atof(*(args + 1));
+					//f_kettle_temp = atof(*(args + 1));
+					f_kettle_temp =  175;
 					callbacks->tempcb(f_kettle_temp);
 				}
 				else if(strcmp(*(args + 0),"SP") == 0)
 				{
-				
+					callbacks->heatlvlcb(atof(*(args + 1)));
 				}
 				else if(strcmp(*(args + 0),"HL") == 0)
 				{					
@@ -54,7 +57,8 @@ void parse_ard_buffer(unsigned char * data)
 				}
 				else if(strcmp(*(args + 0),"PC") == 0)
 				{
-					pulseCount = atoi(*(args +1));
+					//pulseCount = atoi(*(args +1));
+					pulseCount = 1040;
 					recipeSettings->steps[CTL_FILL].volumeCompleted = pulseCount > 0 ? (float)pulseCount / (float)equipSettings->flowTicksPerGallon : 0;
 					recipeSettings->steps[CTL_FILL].countsCompleted = pulseCount;
 					callbacks->fillcb(recipeSettings->steps[CTL_FILL].volumeTotal,recipeSettings->steps[CTL_FILL].volumeCompleted );
@@ -79,15 +83,31 @@ void delayMS(int ms)
 	nanosleep(&tv,NULL);
 }
 
+int step_time_remaining(struct brewStep *step)
+{
+	
+	time_t endtime = (time_t)(step->startTime + ((int)step->duration * 60));
+	
+	return endtime - time(NULL);
+	
+	
+	
+}
+
 void step_message(char * title, char * msg)
 {
+	g_source_remove(tmrArdIFC);
 	callbacks->stepmsgcb(title,msg);
+	tmrArdIFC = g_timeout_add(250,ardIFC_cb,NULL);
 }
 
 gboolean ardIFC_cb(gpointer data)
 {
 	char outbuf[255];
 	int len ;
+	time_t timetoend;
+	time_t now;
+	int timeremaining = 0;
 	
 	int inbytes = RS232_PollComport(equipSettings->serialPort,&buf[inbuffercount],4095);
 	if(inbytes > 0)
@@ -156,7 +176,7 @@ gboolean ardIFC_cb(gpointer data)
 					
 					if(f_kettle_temp >= recipeSettings->steps[CTL_STRIKE].setpoint)
 					{
-						step_message("Drop in brain bucket","Press OK");
+						recipeSettings->steps[CTL_STRIKE].endTime	= time(NULL);
 						g_MachineState ++;
 					}
 					else
@@ -166,6 +186,124 @@ gboolean ardIFC_cb(gpointer data)
 						awaitingResponse = true;
 					}
 					break;
+				case CTL_GRAININ:
+					recipeSettings->steps[CTL_GRAININ].startTime	= time(NULL);
+					step_message("Drop in grain bucket","Press OK");
+					recipeSettings->steps[CTL_GRAININ].endTime	= time(NULL);
+					
+					len = sprintf(outbuf,"SETTEMP:%3.2f\n",recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].setpoint);
+					RS232_SendBuf(equipSettings->serialPort,(unsigned char *)outbuf,len);
+					recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].atSetpoint = false;
+					
+					g_MachineState ++;					
+					break;
+				case CTL_MASH:
+					
+					if(recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].atSetpoint == false)
+					{
+						callbacks->heatcb(recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].description,
+						recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].duration,
+						0,
+						recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].setpoint);
+						
+						if(f_kettle_temp >= recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].setpoint)
+						{
+							recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].atSetpoint = true;
+							recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].startTime = time(NULL);
+						}
+					}
+					else
+					{
+						timeremaining = step_time_remaining(&recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep]);
+						//sprintf(outbuf,"Remaining: %d",timeremaining);
+						//step_message("Step time",outbuf);
+						timetoend = recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].startTime + 
+								(recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].duration * 60);
+							now = time(NULL);
+						
+						callbacks->heatcb(recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].description,
+						recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].duration,
+						(int)timeremaining/*(timetoend - now)*/,
+						recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].setpoint);
+						
+						if(/*(timetoend-now)*/timeremaining <= 0)						
+						{
+							recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].endTime = time(NULL);
+							recipeSettings->mashCurrentStep++;
+							if(recipeSettings->mashCurrentStep >= recipeSettings->mashStepCount)
+							{
+								g_MachineState = CTL_GRAINOUT;
+								break;	
+							}
+							else
+							{
+								//callbacks->heatcb(recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].description,0,0,recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].setpoint);
+								len = sprintf(outbuf,"SETTEMP:%3.2f\n",recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].setpoint);
+								RS232_SendBuf(equipSettings->serialPort,(unsigned char *)outbuf,len);
+								recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].atSetpoint = false;
+								delayMS(25);
+							}
+						}	
+					}
+					
+					printf("Polling hl\n");
+					RS232_SendBuf(equipSettings->serialPort,(unsigned char *)"READHL:1\n",9);
+					//RS232_SendBuf(equipSettings->serialPort,(unsigned char *)"READSP:1\n",9);
+					awaitingResponse = true;
+					break;
+				case CTL_GRAINOUT:
+					recipeSettings->steps[CTL_GRAINOUT].startTime	= time(NULL);
+					step_message("Remove grain bucket","Press OK");
+					recipeSettings->steps[CTL_GRAINOUT].endTime	= time(NULL);
+					
+					len = sprintf(outbuf,"SETTEMP:%3.2f\n",recipeSettings->steps[CTL_BOIL].setpoint);
+					RS232_SendBuf(equipSettings->serialPort,(unsigned char *)outbuf,len);
+					recipeSettings->steps[CTL_BOIL].atSetpoint = false;
+					callbacks->heatcb(recipeSettings->steps[CTL_BOIL].description,0,0,recipeSettings->steps[CTL_BOIL].setpoint);
+					g_MachineState ++;
+					break;
+				case CTL_BOIL:
+					if(recipeSettings->steps[CTL_BOIL].atSetpoint == false)
+					{
+						callbacks->heatcb(recipeSettings->steps[CTL_BOIL].description,
+						(int)recipeSettings->steps[CTL_BOIL].duration,
+						0,
+						recipeSettings->steps[CTL_BOIL].setpoint);
+						if(f_kettle_temp >= recipeSettings->steps[CTL_BOIL].setpoint)
+						{
+							recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].atSetpoint = true;
+							recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].startTime = time(NULL);
+						}
+					}
+					else
+					{
+						//timetoend = recipeSettings->steps[CTL_BOIL].startTime + 
+						//	(recipeSettings->steps[CTL_BOIL].duration * 60);
+						//now = time(NULL);
+						timeremaining = step_time_remaining(&recipeSettings->steps[CTL_BOIL]);
+						callbacks->heatcb(recipeSettings->steps[CTL_BOIL].description,
+						(int)recipeSettings->steps[CTL_BOIL].duration,
+						/*(int)((timetoend - now) / 60) * 100*/timeremaining,
+						recipeSettings->steps[CTL_BOIL].setpoint);
+						
+						if(timeremaining <= 0)
+						{
+							recipeSettings->steps[CTL_BOIL].endTime = time(NULL);
+							
+							g_MachineState ++;
+							break;	
+							
+							
+						}	
+					}
+					
+					printf("Polling hl\n");
+					RS232_SendBuf(equipSettings->serialPort,(unsigned char *)"READHL:1\n",9);
+					awaitingResponse = true;
+					break;
+				case CTL_END:
+					break;
+					
 			}
 		}
 		
@@ -192,7 +330,7 @@ void ardIFC_open()
 	ardPortOpen = true;
 	awaitingResponse = false;
 	pollTemp = true;
-	tmrArdIFC = g_timeout_add(150,ardIFC_cb,NULL);
+	tmrArdIFC = g_timeout_add(250,ardIFC_cb,NULL);
 	//RS232_SendBuf(ARD_PORT,(unsigned char *)"HEATENABLE:1\n",13);
 	return ;
 }
