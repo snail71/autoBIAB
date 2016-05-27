@@ -6,60 +6,41 @@
   <VERSION>1</VERSION>
   <TYPE>All Grain</TYPE>
   <STYLE>
-   <NAME>American Pale Ale</NAME>
+   <NAME>Blonde Ale</NAME>
    <VERSION>1</VERSION>
-   <CATEGORY>American Ale</CATEGORY>
-   <CATEGORY_NUMBER>10</CATEGORY_NUMBER>
-   <STYLE_LETTER>A</STYLE_LETTER>
+   <CATEGORY>Light Hybrid Beer</CATEGORY>
+   <CATEGORY_NUMBER>6</CATEGORY_NUMBER>
+   <STYLE_LETTER>B</STYLE_LETTER>
    <STYLE_GUIDE>BJCP</STYLE_GUIDE>
    <TYPE>Ale</TYPE>
-   <OG_MIN>1.04500000</OG_MIN>
-   <OG_MAX>1.06000000</OG_MAX>
-   <FG_MIN>1.01000000</FG_MIN>
-   <FG_MAX>1.01500000</FG_MAX>
-   <IBU_MIN>30.00000000</IBU_MIN>
-   <IBU_MAX>45.00000000</IBU_MAX>
-   <COLOR_MIN>5.00000000</COLOR_MIN>
-   <COLOR_MAX>14.00000000</COLOR_MAX>
-   <ABV_MIN>4.50000000</ABV_MIN>
-   <ABV_MAX>6.20000000</ABV_MAX>
+   <OG_MIN>1.03800000</OG_MIN>
+   <OG_MAX>1.05400000</OG_MAX>
+   <FG_MIN>1.00800000</FG_MIN>
+   <FG_MAX>1.01300000</FG_MAX>
+   <IBU_MIN>15.00000000</IBU_MIN>
+   <IBU_MAX>28.00000000</IBU_MAX>
+   <COLOR_MIN>3.00000000</COLOR_MIN>
+   <COLOR_MAX>6.00000000</COLOR_MAX>
+   <ABV_MIN>3.80000000</ABV_MIN>
+   <ABV_MAX>5.50000000</ABV_MAX>
    <CARB_MIN>0.00000000</CARB_MIN>
    <CARB_MAX>0.00000000</CARB_MAX>
-   <NOTES>There is some overlap in color between American pale ale and American amber ale. The American pale ale will generally be cleaner, have a less caramelly malt profile, less body, and often more finishing hops.</NOTES>
-   <PROFILE>Usually moderate to strong hop aroma from dry hopping or late kettle additions of American hop varieties. A citrusy hop character is very common, but not required. Low to moderate maltiness supports the hop presentation, and may optionally show small amounts of specialty malt character (bready, toasty, biscuity). Fruity esters vary from moderate to none. No diacetyl. Dry hopping (if used) may add grassy notes, although this character should not be excessive.Pale golden to deep amber. Moderately large white to off-white head with good retention. Generally quite clear, although dry-hopped versions may be slightly hazy.Usually a moderate to high hop flavor, often showing a citrusy American hop character (although other hop varieties may be used). Low to moderately high clean malt character supports the hop presentation, and may optionally show small amounts of specialty malt character (bready, toasty, biscuity). The balance is typically towards the late hops and bitterness, but the malt presence can be substantial. Caramel flavors are usually restrained or absent. Fruity esters can be moderate to none. Moderate to high hop bitterness with a medium to dry finish. Hop flavor and bitterness often lingers into the finish. No diacetyl. Dry hopping (if used) may add grassy notes, although this character should not be excessive.Medium-light to medium body. Carbonation moderate to high. Overall smooth finish without astringency often associated with high hopping rates.Refreshing and hoppy, yet with sufficient supporting malt. An American adaptation of English pale ale, reflecting indigenous ingredients (hops, malt, yeast, and water). Often lighter in color, cleaner in fermentation by-products, and having less caramel flavors than English counterparts.</PROFILE>
-   <INGREDIENTS>Pale ale malt, typically American two-row. American hops, often but not always ones with a citrusy character. American ale yeast. Water can vary in sulfate content, but carbonate content should be relatively low. Specialty grains may add character and complexity, but generally make up a relatively small portion of the grist. Grains that add malt flavor and richness, light sweetness, and toasty or bready notes are often used (along with late hops) to differentiate brands.</INGREDIENTS>
-   <EXAMPLES>Sierra Nevada Pale Ale, Stone Pale Ale, Great Lakes Burning River Pale Ale, Bear Republic XP Pale Ale, Anderson Valley Poleeko Gold Pale Ale, Deschutes Mirror Pond, Full Sail Pale Ale, Three Floyds X-Tra Pale Ale, Firestone Pale Ale, Left Hand Brewing Jackman's Pale Ale</EXAMPLES>
+   <NOTES>In addition to the more common American Blonde Ale, this category can also include modern English Summer Ales, American K?lsch-style beers, and less assertive American and English pale ales.</NOTES>
+   <PROFILE>Light to moderate sweet malty aroma. Low to moderate fruitiness is optional, but acceptable. May have a low to medium hop aroma, and can reflect almost any hop variety. No diacetyl.Light yellow to deep gold in color. Clear to brilliant. Low to medium white head with fair to good retention.Initial soft malty sweetness, but optionally some light character malt flavor (e.g., bread, toast, biscuit, wheat) can also be present. Caramel flavors typically absent. Low to medium esters optional, but are commonly found in many examples. Light to moderate hop flavor (any variety), but shouldn't be overly aggressive. Low to medium bitterness, but the balance is normally towards the malt. Finishes medium-dry to somewhat sweet. No diacetyl.Medium-light to medium body. Medium to high carbonation. Smooth without harsh bitterness or astringency.Easy-drinking, approachable, malt-oriented American craft beer. Currently produced by many (American) microbreweries and brewpubs. Regional variations exist (many West Coast brewpub examples are more assertive, like pale ales) but in most areas this beer is designed as the entry-level craft beer.</PROFILE>
+   <INGREDIENTS>Generally all malt, but can include up to 25% wheat malt and some sugar adjuncts. Any hop variety can be used. Clean American, lightly fruity English, or K?lsch yeast. May also be made with lager yeast, or cold-conditioned. Some versions may have honey, spices and/or fruit added, although if any of these ingredients are stronger than a background flavor they should be entered in specialty, spiced or fruit beer categories instead. Extract versions should only use the lightest malt extracts and avoid kettle caramelization.</INGREDIENTS>
+   <EXAMPLES>Pelican Kiwanda Cream Ale, Russian River Aud Blonde, Rogue Oregon Golden Ale, Widmer Blonde Ale, Fuller's Summer Ale, Hollywood Blonde, Redhook Blonde</EXAMPLES>
   </STYLE>
   <BREWER></BREWER>
-  <BATCH_SIZE>19.87341184</BATCH_SIZE>
-  <BOIL_SIZE>23.65882363</BOIL_SIZE>
+  <BATCH_SIZE>12.30258829</BATCH_SIZE>
+  <BOIL_SIZE>16.08800006</BOIL_SIZE>
   <BOIL_TIME>60.00000000</BOIL_TIME>
   <EFFICIENCY>67.00000000</EFFICIENCY>
   <HOPS>
    <HOP>
-    <NAME>Cascade</NAME>
-    <VERSION>1</VERSION>
-    <ALPHA>6.00000000</ALPHA>
-    <AMOUNT>0.02834952</AMOUNT>
-    <USE>Boil</USE>
-    <TIME>20.00000000</TIME>
-    <NOTES>Pleasant, floral, spicy, and citrus-like.</NOTES>
-    <TYPE>Both</TYPE>
-    <FORM>Pellet</FORM>
-    <BETA>6.00000000</BETA>
-    <HSI>0.00000000</HSI>
-    <ORIGIN>US</ORIGIN>
-    <SUBSTITUTES>Amarillo, Centennial</SUBSTITUTES>
-    <HUMULENE>10.50000000</HUMULENE>
-    <CARYOPHYLLENE>4.50000000</CARYOPHYLLENE>
-    <COHUMULONE>36.50000000</COHUMULONE>
-    <MYRCENE>47.50000000</MYRCENE>
-   </HOP>
-   <HOP>
     <NAME>Amarillo</NAME>
     <VERSION>1</VERSION>
     <ALPHA>9.50000000</ALPHA>
-    <AMOUNT>0.02834952</AMOUNT>
+    <AMOUNT>0.00708738</AMOUNT>
     <USE>Boil</USE>
     <TIME>60.00000000</TIME>
     <NOTES>A recent aroma variety, this citrusy American hop is also used for its smooth bittering properties due to its low cohumulone levels.</NOTES>
@@ -78,9 +59,28 @@
     <NAME>Amarillo</NAME>
     <VERSION>1</VERSION>
     <ALPHA>9.50000000</ALPHA>
-    <AMOUNT>0.02834952</AMOUNT>
+    <AMOUNT>0.00354369</AMOUNT>
     <USE>Boil</USE>
     <TIME>5.00000000</TIME>
+    <NOTES>A recent aroma variety, this citrusy American hop is also used for its smooth bittering properties due to its low cohumulone levels.</NOTES>
+    <TYPE>Both</TYPE>
+    <FORM>Pellet</FORM>
+    <BETA>6.50000000</BETA>
+    <HSI>0.00000000</HSI>
+    <ORIGIN>US</ORIGIN>
+    <SUBSTITUTES>Cascade, Centennial</SUBSTITUTES>
+    <HUMULENE>10.00000000</HUMULENE>
+    <CARYOPHYLLENE>3.00000000</CARYOPHYLLENE>
+    <COHUMULONE>22.50000000</COHUMULONE>
+    <MYRCENE>69.00000000</MYRCENE>
+   </HOP>
+   <HOP>
+    <NAME>Amarillo</NAME>
+    <VERSION>1</VERSION>
+    <ALPHA>9.50000000</ALPHA>
+    <AMOUNT>0.00354369</AMOUNT>
+    <USE>Boil</USE>
+    <TIME>20.00000000</TIME>
     <NOTES>A recent aroma variety, this citrusy American hop is also used for its smooth bittering properties due to its low cohumulone levels.</NOTES>
     <TYPE>Both</TYPE>
     <FORM>Pellet</FORM>
@@ -99,7 +99,7 @@
     <NAME>Vienna Malt</NAME>
     <VERSION>1</VERSION>
     <TYPE>Grain</TYPE>
-    <AMOUNT>6.35029318</AMOUNT>
+    <AMOUNT>2.72155422</AMOUNT>
     <YIELD>78.00000000</YIELD>
     <COLOR>4.00000000</COLOR>
     <ADD_AFTER_BOIL>FALSE</ADD_AFTER_BOIL>
@@ -150,7 +150,7 @@
      <TYPE>Temperature</TYPE>
      <INFUSE_AMOUNT>0.00000000</INFUSE_AMOUNT>
      <STEP_TEMP>48.88888889</STEP_TEMP>
-     <STEP_TIME>2.00000000</STEP_TIME>
+     <STEP_TIME>20.00000000</STEP_TIME>
      <RAMP_TIME>0.00000000</RAMP_TIME>
      <END_TEMP>48.88888889</END_TEMP>
      <INFUSE_TEMP>67.00000000</INFUSE_TEMP>
@@ -162,7 +162,7 @@
      <TYPE>Temperature</TYPE>
      <INFUSE_AMOUNT>0.00000000</INFUSE_AMOUNT>
      <STEP_TEMP>66.66666667</STEP_TEMP>
-     <STEP_TIME>2.00000000</STEP_TIME>
+     <STEP_TIME>60.00000000</STEP_TIME>
      <RAMP_TIME>0.00000000</RAMP_TIME>
      <END_TEMP>66.66666667</END_TEMP>
      <INFUSE_TEMP>67.00000000</INFUSE_TEMP>
@@ -174,7 +174,7 @@
      <TYPE>Temperature</TYPE>
      <INFUSE_AMOUNT>0.00000000</INFUSE_AMOUNT>
      <STEP_TEMP>75.55555556</STEP_TEMP>
-     <STEP_TIME>2.00000000</STEP_TIME>
+     <STEP_TIME>10.00000000</STEP_TIME>
      <RAMP_TIME>0.00000000</RAMP_TIME>
      <END_TEMP>75.55555556</END_TEMP>
      <INFUSE_TEMP>67.00000000</INFUSE_TEMP>
@@ -185,39 +185,39 @@
    <TUN_TEMP>20.00000000</TUN_TEMP>
    <SPARGE_TEMP>74.00000000</SPARGE_TEMP>
    <PH>7.00000000</PH>
-   <TUN_WEIGHT>4.08233133</TUN_WEIGHT>
-   <TUN_SPECIFIC_HEAT>0.30000000</TUN_SPECIFIC_HEAT>
+   <TUN_WEIGHT>0.00000000</TUN_WEIGHT>
+   <TUN_SPECIFIC_HEAT>0.00000000</TUN_SPECIFIC_HEAT>
    <EQUIP_ADJUST>TRUE</EQUIP_ADJUST>
   </MASH>
   <INSTRUCTIONS/>
   <BREWNOTES/>
   <ASST_BREWER>Brewtarget: free beer software</ASST_BREWER>
   <EQUIPMENT>
-   <NAME>5.0 gal - All Grain</NAME>
+   <NAME>3 gallon - all grain</NAME>
    <VERSION>1</VERSION>
-   <BOIL_SIZE>23.65882363</BOIL_SIZE>
-   <BATCH_SIZE>18.92705890</BATCH_SIZE>
-   <TUN_VOLUME>18.92705890</TUN_VOLUME>
-   <TUN_WEIGHT>4.08233133</TUN_WEIGHT>
-   <TUN_SPECIFIC_HEAT>0.30000000</TUN_SPECIFIC_HEAT>
+   <BOIL_SIZE>14.66847065</BOIL_SIZE>
+   <BATCH_SIZE>11.35623534</BATCH_SIZE>
+   <TUN_VOLUME>28.39058835</TUN_VOLUME>
+   <TUN_WEIGHT>0.00000000</TUN_WEIGHT>
+   <TUN_SPECIFIC_HEAT>0.00000000</TUN_SPECIFIC_HEAT>
    <TOP_UP_WATER>0.00000000</TOP_UP_WATER>
-   <TRUB_CHILLER_LOSS>1.89270589</TRUB_CHILLER_LOSS>
-   <EVAP_RATE>15.00000002</EVAP_RATE>
+   <TRUB_CHILLER_LOSS>0.47317647</TRUB_CHILLER_LOSS>
+   <EVAP_RATE>25.00000003</EVAP_RATE>
    <REAL_EVAP_RATE>2.83905884</REAL_EVAP_RATE>
    <BOIL_TIME>60.00000000</BOIL_TIME>
    <CALC_BOIL_VOLUME>TRUE</CALC_BOIL_VOLUME>
-   <LAUTER_DEADSPACE>0.00000000</LAUTER_DEADSPACE>
+   <LAUTER_DEADSPACE>0.47317647</LAUTER_DEADSPACE>
    <TOP_UP_KETTLE>0.00000000</TOP_UP_KETTLE>
    <HOP_UTILIZATION>100.00000000</HOP_UTILIZATION>
    <NOTES></NOTES>
-   <ABSORPTION>1.08490257</ABSORPTION>
+   <ABSORPTION>2.08635109</ABSORPTION>
    <BOILING_POINT>100.00000000</BOILING_POINT>
   </EQUIPMENT>
   <NOTES></NOTES>
   <TASTE_NOTES></TASTE_NOTES>
   <TASTE_RATING>0.00000000</TASTE_RATING>
-  <OG>1.05867998</OG>
-  <FG>1.01467000</FG>
+  <OG>1.04290148</OG>
+  <FG>1.01072537</FG>
   <FERMENTATION_STAGES>1</FERMENTATION_STAGES>
   <PRIMARY_AGE>0.00000000</PRIMARY_AGE>
   <PRIMARY_TEMP>20.00000000</PRIMARY_TEMP>
