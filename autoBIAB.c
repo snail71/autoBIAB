@@ -34,7 +34,7 @@ GtkWidget *buttonStart;
 GtkWidget *buttonStop;
 GtkWidget *buttonPause;
 GtkWidget *btnConfig;
-
+GtkWidget *btnOff;
 
 
 //GtkLabel *lblButtonStartStop;
@@ -87,6 +87,7 @@ void update_brew_state_cb(enum brew_state_t state)
 			gtk_widget_set_sensitive(buttonStop,true);
 			gtk_widget_set_sensitive(buttonPause,false);
 			gtk_widget_set_sensitive(btnConfig,false);
+			gtk_widget_set_sensitive(btnOff,false);
 			gtk_label_set_text(lblStatus,"Paused");
 			break;
 		case BREW_RUNNING:
@@ -94,6 +95,7 @@ void update_brew_state_cb(enum brew_state_t state)
 			gtk_widget_set_sensitive(buttonStop,true);
 			gtk_widget_set_sensitive(buttonPause,true);
 			gtk_widget_set_sensitive(btnConfig,false);
+			gtk_widget_set_sensitive(btnOff,false);
 			gtk_label_set_text(lblStatus,"Running");
 			break;
 		case BREW_STOPPED:
@@ -103,6 +105,7 @@ void update_brew_state_cb(enum brew_state_t state)
 			gtk_widget_set_sensitive(buttonStop,false);
 			gtk_widget_set_sensitive(buttonPause,false);
 			gtk_widget_set_sensitive(btnConfig,true);
+			gtk_widget_set_sensitive(btnOff,true);
 			gtk_label_set_text(lblStatus,"Stopped");
 			break;
 	}
@@ -142,14 +145,25 @@ void btnStopClicked(GtkWidget *widget, gpointer data)
 	stop_brew();
 }
 
+void btnOffClicked(GtkWidget *widget, gpointer data)
+{
+	system("sudo halt");
+	
+}
+
 void btnPauseClicked(GtkWidget *widget, gpointer data)
 {
 	pause_brew();
 	
 }
+
 void idle_cb()
 {
-	
+	gtk_label_set_text(lblStepName,"DONE");	
+	gtk_label_set_text(lblHeatLevel,"---");
+	gtk_label_set_text(lblStepSetpoint,"---");
+	gtk_label_set_text(lblStepDuration,"---");
+	gtk_label_set_text(lblStepRemaining,"---");
 }
 
 void prompt_step_msg(char * title, char * msg)
@@ -213,6 +227,7 @@ int main(int argc, char *argv[])
 	buttonStart = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnStart"));
 	buttonStop = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnStop"));
 	buttonPause = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnPause"));
+	btnOff = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnOff"));
 	btnConfig = GTK_WIDGET(gtk_builder_get_object(gtkBuilder,"btnConfig"));
 	gtk_widget_set_sensitive(buttonStart,recipeLoaded);
 	lblKettleTemp = GTK_LABEL(gtk_builder_get_object(gtkBuilder,"lblKettleTemp"));
@@ -231,6 +246,7 @@ int main(int argc, char *argv[])
 	g_signal_connect(buttonStart,"clicked",G_CALLBACK(btnStartClicked),NULL);
 	g_signal_connect(buttonStop,"clicked",G_CALLBACK(btnStopClicked),NULL);
 	g_signal_connect(buttonPause,"clicked",G_CALLBACK(btnPauseClicked),NULL);
+	g_signal_connect(btnOff,"clicked",G_CALLBACK(btnOffClicked),NULL);
 	gtk_window_move(mainWin,0,0);
 	gtk_widget_show_all(window);
 	

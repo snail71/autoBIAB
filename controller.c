@@ -44,12 +44,12 @@ void parse_ard_buffer(unsigned char * data)
 				if(strcmp(*(args + 0),"TEMP") == 0)
 				{					
 					//f_kettle_temp = atof(*(args + 1));
-					f_kettle_temp =  175;
+					f_kettle_temp =  212;
 					callbacks->tempcb(f_kettle_temp);
 				}
 				else if(strcmp(*(args + 0),"SP") == 0)
 				{
-					callbacks->heatlvlcb(atof(*(args + 1)));
+					//callbacks->heatlvlcb(atof(*(args + 1)));
 				}
 				else if(strcmp(*(args + 0),"HL") == 0)
 				{					
@@ -271,8 +271,8 @@ gboolean ardIFC_cb(gpointer data)
 						recipeSettings->steps[CTL_BOIL].setpoint);
 						if(f_kettle_temp >= recipeSettings->steps[CTL_BOIL].setpoint)
 						{
-							recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].atSetpoint = true;
-							recipeSettings->steps[CTL_MASH + recipeSettings->mashCurrentStep].startTime = time(NULL);
+							recipeSettings->steps[CTL_BOIL].atSetpoint = true;
+							recipeSettings->steps[CTL_BOIL].startTime = time(NULL);
 						}
 					}
 					else
@@ -291,6 +291,9 @@ gboolean ardIFC_cb(gpointer data)
 							recipeSettings->steps[CTL_BOIL].endTime = time(NULL);
 							
 							g_MachineState ++;
+							len = sprintf(outbuf,"HEATENABLE:%d\n",0);
+							RS232_SendBuf(equipSettings->serialPort,(unsigned char *)outbuf,len);
+							callbacks->idlecb();
 							break;	
 							
 							
@@ -302,6 +305,8 @@ gboolean ardIFC_cb(gpointer data)
 					awaitingResponse = true;
 					break;
 				case CTL_END:
+					
+					//stop_brew();
 					break;
 					
 			}
